@@ -43,11 +43,10 @@ class DatabaseService:
         """
         try:
             client = self.get_client()
-            
-            # Simple query to verify connection
-            # Query the _system_health table or a simple system query
-            result = client.table("_system_health").select("*").limit(1).execute()
-            
+
+            # Simple query to verify connection against a known table
+            client.table("users").select("id").limit(1).execute()
+
             logger.info("Database health check passed")
             return True
 
