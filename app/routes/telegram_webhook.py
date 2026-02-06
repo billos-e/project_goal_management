@@ -121,7 +121,6 @@ async def telegram_webhook(
         response_text = habit_service.format_habit_list(habits)
         await telegram_service.send_message(chat_id, response_text)
         return {"status": "ok", "message": "Habits listed"}
-
     nlu_result = await nlu_service.identify_intent(text)
     response_text = nlu_result.get("response_text") or "Réponse indisponible."
 
