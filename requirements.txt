@@ -1,0 +1,15 @@
+# FastAPI Stack
+fastapi==0.115.0                # Web framework (compatible with Python 3.13)
+uvicorn==0.32.1                 # ASGI server
+pydantic==2.10.6                # Data validation (compatible with Python 3.13)
+pydantic-settings==2.7.1        # Environment variable management
+python-dotenv==1.0.1            # .env file support
+
+# Database
+supabase==2.3.4                 # Supabase Python client
+
+# Telegram (for Story 1.2, added now for consistency)
+python-telegram-bot==20.3       # Telegram Bot API client
+
+# Utilities
+httpx==0.24.1                   # Async HTTP client (compatible with supabase and telegram)
