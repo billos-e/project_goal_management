@@ -1,6 +1,6 @@
 # Story 2.2: Gestion des Objectifs à Deadline (CRUD)
 
-**Status:** ready-for-dev  
+**Status:** review  
 **Story ID:** 2.2  
 **Story Key:** 2-2-objectifs-crud  
 **Created:** 2026-02-06
@@ -82,23 +82,23 @@ Cette story complète l’Epic 2 en ajoutant le CRUD minimal des objectifs à é
 
 ## Tasks / Subtasks
 
-- [ ] Command parsing Telegram (AC: 1)
-  - [ ] Détecter `new goal:` et `show goals`
-  - [ ] Extraire `title` et `deadline` basique (ex: "tomorrow 5pm")
-- [ ] ObjectiveService + DB access (AC: 1)
-  - [ ] Ajouter `create_objective`
-  - [ ] Ajouter `list_objectives`
-- [ ] Timezone & parsing (AC: 1)
-  - [ ] Convertir deadlines en UTC pour stockage
-  - [ ] Afficher en Europe/Paris dans la réponse
-- [ ] Schémas Pydantic (AC: 1)
-  - [ ] Ajouter modèles objective
-- [ ] Réponses TARS (AC: 1)
-  - [ ] Confirmation création
-  - [ ] Listing lisible
-- [ ] Tests (AC: 1)
-  - [ ] Ajout tests sur webhook pour `new goal:`
-  - [ ] Ajout tests sur webhook pour `show goals`
+- [x] Command parsing Telegram (AC: 1)
+  - [x] Détecter `new goal:` et `show goals`
+  - [x] Extraire `title` et `deadline` basique (ex: "tomorrow 5pm")
+- [x] ObjectiveService + DB access (AC: 1)
+  - [x] Ajouter `create_objective`
+  - [x] Ajouter `list_objectives`
+- [x] Timezone & parsing (AC: 1)
+  - [x] Convertir deadlines en UTC pour stockage
+  - [x] Afficher en Europe/Paris dans la réponse
+- [x] Schémas Pydantic (AC: 1)
+  - [x] Ajouter modèles objective
+- [x] Réponses TARS (AC: 1)
+  - [x] Confirmation création
+  - [x] Listing lisible
+- [x] Tests (AC: 1)
+  - [x] Ajout tests sur webhook pour `new goal:`
+  - [x] Ajout tests sur webhook pour `show goals`
 
 ---
 
@@ -143,6 +143,26 @@ GPT-5.2-Codex
 
 ### Debug Log References
 
+- Tests: `pytest`
+
 ### Completion Notes List
 
+- Routage Telegram pour `new goal:` et `show goals` avec contournement NLU.
+- Ajout du service `ObjectiveService` + CRUD minimal et parsing deadline.
+- Conversion timezone UTC/Europe-Paris pour les deadlines.
+- Schémas Pydantic objectifs ajoutés.
+- Tests webhook ajoutés et suite complète passée.
+
 ### File List
+
+- app/models/schemas.py
+- app/routes/telegram_webhook.py
+- app/services/__init__.py
+- app/services/database.py
+- app/services/objectives.py
+- tests/test_telegram_webhook.py
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+
+### Change Log
+
+- 2026-02-06: Implémentation CRUD minimal Objectifs + tests webhook.

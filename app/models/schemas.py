@@ -34,3 +34,17 @@ class HabitListItem(BaseModel):
     id: str
     title: str
     frequency_type: str
+
+
+class ObjectiveCreate(BaseModel):
+    """Objective creation payload."""
+    title: str
+    deadline: datetime
+
+
+class ObjectiveListItem(BaseModel):
+    """Objective list response item."""
+    id: str
+    title: str
+    deadline: datetime
+    status: str

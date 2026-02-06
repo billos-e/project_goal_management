@@ -211,5 +211,61 @@ class DatabaseService:
             logger.error(f"Failed to list habits: {str(exc)}")
             return []
 
+    async def create_objective(
+        self,
+        user_id: str,
+        title: str,
+        deadline_utc: str,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Create an objective record.
+
+        Args:
+            user_id: User UUID
+            title: Objective title
+            deadline_utc: Deadline in ISO UTC format
+
+        Returns:
+            Created objective record dict if successful, else None
+        """
+        try:
+            client = self.get_client()
+            payload = {
+                "user_id": user_id,
+                "title": title,
+                "deadline": deadline_utc,
+            }
+            result = client.table("objectives").insert(payload).execute()
+            if result.data:
+                return result.data[0]
+            return None
+        except Exception as exc:
+            logger.error(f"Failed to create objective: {str(exc)}")
+            return None
+
+    async def list_objectives(self, user_id: str) -> List[Dict[str, Any]]:
+        """
+        List objectives for a user.
+
+        Args:
+            user_id: User UUID
+
+        Returns:
+            List of objective records
+        """
+        try:
+            client = self.get_client()
+            result = (
+                client.table("objectives")
+                .select("*")
+                .eq("user_id", user_id)
+                .order("deadline", desc=False)
+                .execute()
+            )
+            return result.data or []
+        except Exception as exc:
+            logger.error(f"Failed to list objectives: {str(exc)}")
+            return []
+
 # Singleton instance
 database_service = DatabaseService()

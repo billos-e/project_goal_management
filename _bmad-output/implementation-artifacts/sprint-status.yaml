@@ -38,7 +38,7 @@ development_status:
   # Epic 2: Gestion des Engagements
   epic-2: in-progress
   2-1-habitudes-crud: done
-  2-2-objectifs-crud: ready-for-dev
+  2-2-objectifs-crud: review
   2-3-modification-et-suppression: backlog
   epic-2-retrospective: optional
 
