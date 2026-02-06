@@ -1,5 +1,5 @@
 """Database service for Supabase connection and queries."""
-from typing import Optional
+from typing import Any, Dict, List, Optional
 from supabase import create_client, Client
 from app.config import settings
 from app.utils.logger import setup_logger
@@ -43,11 +43,10 @@ class DatabaseService:
         """
         try:
             client = self.get_client()
-            
-            # Simple query to verify connection
-            # Query the _system_health table or a simple system query
-            result = client.table("_system_health").select("*").limit(1).execute()
-            
+
+            # Simple query to verify connection against a known table
+            client.table("users").select("id").limit(1).execute()
+
             logger.info("Database health check passed")
             return True
 
@@ -76,6 +75,196 @@ class DatabaseService:
             logger.error(f"Failed to upsert user: {str(exc)}")
             return False
 
+    async def get_user_by_telegram_id(self, telegram_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve a user record by Telegram ID.
+
+        Args:
+            telegram_id: Telegram user ID
+
+        Returns:
+            User record dict if found, else None
+        """
+        try:
+            client = self.get_client()
+            result = (
+                client.table("users")
+                .select("*")
+                .eq("telegram_id", telegram_id)
+                .limit(1)
+                .execute()
+            )
+            if result.data:
+                return result.data[0]
+            return None
+        except Exception as exc:
+            logger.error(f"Failed to fetch user: {str(exc)}")
+            return None
+
+    async def create_habit(
+        self,
+        user_id: str,
+        title: str,
+        frequency_type: str,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Create a habit record.
+
+        Args:
+            user_id: User UUID
+            title: Habit title
+            frequency_type: daily|weekly|custom
+
+        Returns:
+            Created habit record dict if successful, else None
+        """
+        try:
+            client = self.get_client()
+            payload = {
+                "user_id": user_id,
+                "title": title,
+                "frequency_type": frequency_type,
+            }
+            result = client.table("habits").insert(payload).execute()
+            if result.data:
+                return result.data[0]
+            return None
+        except Exception as exc:
+            logger.error(f"Failed to create habit: {str(exc)}")
+            return None
+
+    async def create_habit_schedules(
+        self,
+        habit_id: str,
+        schedules: List[Dict[str, Any]],
+    ) -> bool:
+        """
+        Create habit schedule records.
+
+        Args:
+            habit_id: Habit UUID
+            schedules: List of schedule dicts with day_of_week/time_of_day
+
+        Returns:
+            True if successful
+        """
+        if not schedules:
+            return True
+
+        try:
+            client = self.get_client()
+            payload = [
+                {
+                    "habit_id": habit_id,
+                    "day_of_week": schedule.get("day_of_week"),
+                    "time_of_day": schedule.get("time_of_day"),
+                }
+                for schedule in schedules
+            ]
+            client.table("habit_schedules").insert(payload).execute()
+            return True
+        except Exception as exc:
+            logger.error(f"Failed to create habit schedules: {str(exc)}")
+            return False
+
+    async def delete_habit(self, habit_id: str) -> bool:
+        """
+        Delete a habit by id.
+
+        Args:
+            habit_id: Habit UUID
+
+        Returns:
+            True if successful
+        """
+        try:
+            client = self.get_client()
+            client.table("habits").delete().eq("id", habit_id).execute()
+            return True
+        except Exception as exc:
+            logger.error(f"Failed to delete habit: {str(exc)}")
+            return False
+
+    async def list_habits(self, user_id: str) -> List[Dict[str, Any]]:
+        """
+        List active habits for a user.
+
+        Args:
+            user_id: User UUID
+
+        Returns:
+            List of habit records
+        """
+        try:
+            client = self.get_client()
+            result = (
+                client.table("habits")
+                .select("*")
+                .eq("user_id", user_id)
+                .eq("active", True)
+                .order("created_at", desc=False)
+                .execute()
+            )
+            return result.data or []
+        except Exception as exc:
+            logger.error(f"Failed to list habits: {str(exc)}")
+            return []
+
+    async def create_objective(
+        self,
+        user_id: str,
+        title: str,
+        deadline_utc: str,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Create an objective record.
+
+        Args:
+            user_id: User UUID
+            title: Objective title
+            deadline_utc: Deadline in ISO UTC format
+
+        Returns:
+            Created objective record dict if successful, else None
+        """
+        try:
+            client = self.get_client()
+            payload = {
+                "user_id": user_id,
+                "title": title,
+                "deadline": deadline_utc,
+            }
+            result = client.table("objectives").insert(payload).execute()
+            if result.data:
+                return result.data[0]
+            return None
+        except Exception as exc:
+            logger.error(f"Failed to create objective: {str(exc)}")
+            return None
+
+    async def list_objectives(self, user_id: str) -> List[Dict[str, Any]]:
+        """
+        List objectives for a user.
+
+        Args:
+            user_id: User UUID
+
+        Returns:
+            List of objective records
+        """
+        try:
+            client = self.get_client()
+            result = (
+                client.table("objectives")
+                .select("*")
+                .eq("user_id", user_id)
+                .order("deadline", desc=False)
+                .execute()
+            )
+            return result.data or []
+        except Exception as exc:
+            logger.error(f"Failed to list objectives: {str(exc)}")
+            return []
 
 # Singleton instance
 database_service = DatabaseService()

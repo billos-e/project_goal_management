@@ -4,7 +4,13 @@ from typing import Optional
 from fastapi import APIRouter, Request, Header, HTTPException, status
 
 from app.config import settings
-from app.services import database_service, nlu_service, telegram_service
+from app.services import (
+    database_service,
+    habit_service,
+    nlu_service,
+    objective_service,
+    telegram_service,
+)
 from app.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -82,7 +88,10 @@ async def telegram_webhook(
     # Minimal user tracking
     await database_service.upsert_user(telegram_id, settings.timezone)
 
-    if text.startswith("/self_test"):
+    normalized_text = text.strip()
+    lowered_text = normalized_text.lower()
+
+    if lowered_text.startswith("/self_test"):
         db_ok = await database_service.health_check()
         gemini_ok, gemini_error = await nlu_service.health_check()
 
@@ -98,6 +107,48 @@ async def telegram_webhook(
         await telegram_service.send_message(chat_id, response_text)
         return {"status": "ok", "message": "Self-test processed"}
 
+    if lowered_text.startswith("new habit:"):
+        raw_habit = normalized_text.split(":", 1)[1].strip()
+        created, response_text = await habit_service.create_habit(telegram_id, raw_habit)
+        await telegram_service.send_message(chat_id, response_text)
+        return {
+            "status": "ok",
+            "message": "Habit created" if created else "Habit creation failed",
+        }
+
+    if lowered_text.startswith("new goal:"):
+        raw_goal = normalized_text.split(":", 1)[1].strip()
+        created, response_text = await objective_service.create_objective(telegram_id, raw_goal)
+        await telegram_service.send_message(chat_id, response_text)
+        return {
+            "status": "ok",
+            "message": "Objective created" if created else "Objective creation failed",
+        }
+
+    if lowered_text.startswith((
+        "show habits",
+        "list habits",
+        "mes habitudes",
+        "liste habitudes",
+        "voir habitudes",
+    )):
+        habits = await habit_service.list_habits(telegram_id)
+        response_text = habit_service.format_habit_list(habits)
+        await telegram_service.send_message(chat_id, response_text)
+        return {"status": "ok", "message": "Habits listed"}
+
+    if lowered_text.startswith((
+        "show goals",
+        "list goals",
+        "mes objectifs",
+        "liste objectifs",
+        "voir objectifs",
+    )):
+        objectives = await objective_service.list_objectives(telegram_id)
+        user_timezone = await objective_service.get_user_timezone(telegram_id)
+        response_text = objective_service.format_objective_list(objectives, user_timezone)
+        await telegram_service.send_message(chat_id, response_text)
+        return {"status": "ok", "message": "Objectives listed"}
     nlu_result = await nlu_service.identify_intent(text)
     response_text = nlu_result.get("response_text") or "Réponse indisponible."
 
