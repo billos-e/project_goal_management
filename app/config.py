@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     telegram_webhook_secret: Optional[str] = None
     telegram_webhook_url: Optional[str] = None
 
+    # Gemini (Story 1.3)
+    gemini_api_key: Optional[str] = None
+    gemini_model: str = "gemini-1.5-flash"
+
     # Application
     app_name: str = "focus-flow"
     environment: str = "production"

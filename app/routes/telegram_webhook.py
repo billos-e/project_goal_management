@@ -1,11 +1,10 @@
-"""Telegram webhook endpoint (Story 1.2)."""
-import random
+"""Telegram webhook endpoint (Stories 1.2-1.4)."""
 from typing import Optional
 
 from fastapi import APIRouter, Request, Header, HTTPException, status
 
 from app.config import settings
-from app.services import database_service, telegram_service
+from app.services import database_service, nlu_service, telegram_service
 from app.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -75,20 +74,32 @@ async def telegram_webhook(
     if chat_id is None or telegram_id is None:
         return {"status": "ok", "message": "Missing chat or user info"}
 
+    text = message.get("text", "")
+
     # Cold-start UX: send typing indicator immediately
     await telegram_service.send_typing_indicator(chat_id)
 
     # Minimal user tracking
     await database_service.upsert_user(telegram_id, settings.timezone)
 
-    tars_templates = [
-        "Affirmatif. J’analyse votre requête avec un sarcasme calibré.",
-        "Reçu. Je déclenche mes circuits d’optimisme forcé.",
-        "Message accepté. Je vais faire semblant d’être surpris.",
-        "Je traite ça. Ne pas paniquer, c’est ce que je fais de mieux.",
-        "Analyse en cours. Spoiler: je suis déjà un peu déçu.",
-    ]
-    response_text = random.choice(tars_templates)
+    if text.startswith("/self_test"):
+        db_ok = await database_service.health_check()
+        gemini_ok, gemini_error = await nlu_service.health_check()
+
+        response_lines = [
+            "🔎 Diagnostic système",
+            f"DB: {'✅' if db_ok else '❌'}",
+            f"Gemini: {'✅' if gemini_ok else '❌'}",
+        ]
+        if not gemini_ok and gemini_error:
+            response_lines.append(f"Gemini error: {gemini_error}")
+
+        response_text = "\n".join(response_lines)
+        await telegram_service.send_message(chat_id, response_text)
+        return {"status": "ok", "message": "Self-test processed"}
+
+    nlu_result = await nlu_service.identify_intent(text)
+    response_text = nlu_result.get("response_text") or "Réponse indisponible."
 
     await telegram_service.send_message(chat_id, response_text)
 

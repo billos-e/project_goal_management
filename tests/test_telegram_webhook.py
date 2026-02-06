@@ -60,10 +60,18 @@ def test_webhook_valid_secret_sends_response(client: TestClient):
     ) as send_mock, patch(
         "app.services.database.database_service.upsert_user",
         new_callable=AsyncMock,
-    ) as upsert_mock:
+    ) as upsert_mock, patch(
+        "app.services.nlu.nlu_service.identify_intent",
+        new_callable=AsyncMock,
+    ) as nlu_mock:
         typing_mock.return_value = True
         send_mock.return_value = True
         upsert_mock.return_value = True
+        nlu_mock.return_value = {
+            "intent": "greet",
+            "response_text": "Salut, humain.",
+            "source": "gemini",
+        }
 
         response = client.post(
             "/telegram/webhook/test-token",
@@ -75,3 +83,48 @@ def test_webhook_valid_secret_sends_response(client: TestClient):
         typing_mock.assert_awaited_once()
         send_mock.assert_awaited_once()
         upsert_mock.assert_awaited_once()
+        nlu_mock.assert_awaited_once()
+
+
+def test_webhook_self_test(client: TestClient):
+    """/self_test should call diagnostics and send status message."""
+    settings.telegram_webhook_secret = "test-secret"
+    settings.telegram_bot_token = "test-token"
+
+    update = _make_update()
+    update["message"]["text"] = "/self_test"
+
+    with patch(
+        "app.services.telegram.telegram_service.send_typing_indicator",
+        new_callable=AsyncMock,
+    ) as typing_mock, patch(
+        "app.services.telegram.telegram_service.send_message",
+        new_callable=AsyncMock,
+    ) as send_mock, patch(
+        "app.services.database.database_service.upsert_user",
+        new_callable=AsyncMock,
+    ) as upsert_mock, patch(
+        "app.services.database.database_service.health_check",
+        new_callable=AsyncMock,
+    ) as db_mock, patch(
+        "app.services.nlu.nlu_service.health_check",
+        new_callable=AsyncMock,
+    ) as gemini_mock:
+        typing_mock.return_value = True
+        send_mock.return_value = True
+        upsert_mock.return_value = True
+        db_mock.return_value = True
+        gemini_mock.return_value = (True, None)
+
+        response = client.post(
+            "/telegram/webhook/test-token",
+            json=update,
+            headers={"X-Telegram-Bot-Api-Secret-Token": "test-secret"},
+        )
+
+        assert response.status_code == 200
+        typing_mock.assert_awaited_once()
+        send_mock.assert_awaited_once()
+        upsert_mock.assert_awaited_once()
+        db_mock.assert_awaited_once()
+        gemini_mock.assert_awaited_once()
