@@ -1,6 +1,6 @@
 # Story 2.2: Gestion des Objectifs à Deadline (CRUD)
 
-**Status:** review  
+**Status:** done  
 **Story ID:** 2.2  
 **Story Key:** 2-2-objectifs-crud  
 **Created:** 2026-02-06
@@ -152,6 +152,9 @@ GPT-5.2-Codex
 - Conversion timezone UTC/Europe-Paris pour les deadlines.
 - Schémas Pydantic objectifs ajoutés.
 - Tests webhook ajoutés et suite complète passée.
+- Fix review: timezone utilisateur utilisée pour parsing/affichage.
+- Fix review: parsing sans "by/avant/pour" et support "today"/date.
+- Tests unitaires parsing objectifs ajoutés.
 
 ### File List
 
@@ -161,8 +164,10 @@ GPT-5.2-Codex
 - app/services/database.py
 - app/services/objectives.py
 - tests/test_telegram_webhook.py
+- tests/test_objective_service.py
 - _bmad-output/implementation-artifacts/sprint-status.yaml
 
 ### Change Log
 
 - 2026-02-06: Implémentation CRUD minimal Objectifs + tests webhook.
+- 2026-02-06: Fixes review (timezone utilisateur, parsing, tests).

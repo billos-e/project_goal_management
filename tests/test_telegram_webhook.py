@@ -284,6 +284,9 @@ def test_webhook_show_goals_command(client: TestClient):
         "app.routes.telegram_webhook.objective_service.list_objectives",
         new_callable=AsyncMock,
     ) as list_mock, patch(
+        "app.routes.telegram_webhook.objective_service.get_user_timezone",
+        new_callable=AsyncMock,
+    ) as timezone_mock, patch(
         "app.routes.telegram_webhook.objective_service.format_objective_list",
     ) as format_mock, patch(
         "app.routes.telegram_webhook.nlu_service.identify_intent",
@@ -293,6 +296,7 @@ def test_webhook_show_goals_command(client: TestClient):
         send_mock.return_value = True
         upsert_mock.return_value = True
         list_mock.return_value = [{"title": "Finish report", "deadline": "2026-02-07T16:00:00+00:00"}]
+        timezone_mock.return_value = "Europe/Paris"
         format_mock.return_value = "1. Finish report — 07/02/2026 17:00"
 
         response = client.post(
@@ -306,5 +310,6 @@ def test_webhook_show_goals_command(client: TestClient):
         send_mock.assert_awaited_once()
         upsert_mock.assert_awaited_once()
         list_mock.assert_awaited_once_with(123456)
+        timezone_mock.assert_awaited_once_with(123456)
         format_mock.assert_called_once()
         nlu_mock.assert_not_awaited()

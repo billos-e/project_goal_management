@@ -145,7 +145,8 @@ async def telegram_webhook(
         "voir objectifs",
     )):
         objectives = await objective_service.list_objectives(telegram_id)
-        response_text = objective_service.format_objective_list(objectives)
+        user_timezone = await objective_service.get_user_timezone(telegram_id)
+        response_text = objective_service.format_objective_list(objectives, user_timezone)
         await telegram_service.send_message(chat_id, response_text)
         return {"status": "ok", "message": "Objectives listed"}
     nlu_result = await nlu_service.identify_intent(text)
