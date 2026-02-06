@@ -8,7 +8,12 @@
 .gemini/
 .github/agents/
 _bmad/
-_bmad-output/
+_bmad-output/**
+!_bmad-output/
+!_bmad-output/implementation-artifacts/
+!_bmad-output/implementation-artifacts/**
+!_bmad-output/planning-artifacts/
+!_bmad-output/planning-artifacts/**
 
 # Python
 __pycache__/

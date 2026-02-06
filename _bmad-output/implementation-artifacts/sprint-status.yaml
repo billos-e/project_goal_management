@@ -1,0 +1,62 @@
+# Sprint Status Tracking
+# Project: project_goal_management (Focus & Flow)
+# Generated: 2026-02-05
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+
+generated: 2026-02-05
+project: project_goal_management
+project_key: FF
+tracking_system: file-system
+story_location: "_bmad-output/implementation-artifacts"
+
+development_status:
+  # Epic 1: Fondations & Cerveau TARS
+  epic-1: in-progress
+  1-1-infrastructure-fastapi: review
+  1-2-canal-telegram-tars: ready-for-dev
+  1-3-pipeline-nlu-gemini: ready-for-dev
+  1-4-diagnostic-self-test: ready-for-dev
+  epic-1-retrospective: optional
+
+  # Epic 2: Gestion des Engagements
+  epic-2: backlog
+  2-1-habitudes-crud: backlog
+  2-2-objectifs-crud: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Cycle de Suivi & Micro-Wins
+  epic-3: backlog
+  3-1-check-in-tracking: backlog
+  3-2-micro-wins-completion: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Discipline Adaptive & Cooling
+  epic-4: backlog
+  4-1-reminders-system: backlog
+  4-2-pause-mode: backlog
+  4-3-cooling-algorithm: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Bilan, Analytics & Souveraineté
+  epic-5: backlog
+  5-1-success-days-stats: backlog
+  5-2-micro-wins-analytics: backlog
+  5-3-export-json: backlog
+  epic-5-retrospective: optional
