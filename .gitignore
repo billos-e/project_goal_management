@@ -7,8 +7,6 @@
 .agent/
 .gemini/
 .github/agents/
-_bmad/
-_bmad-output/
 
 # Python
 __pycache__/

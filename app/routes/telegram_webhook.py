@@ -1,6 +1,10 @@
-"""Telegram webhook endpoint (skeleton for Story 1.2)."""
-from fastapi import APIRouter, Request, Header, HTTPException, status
+"""Telegram webhook endpoint (Stories 1.2-1.4)."""
 from typing import Optional
+
+from fastapi import APIRouter, Request, Header, HTTPException, status
+
+from app.config import settings
+from app.services import database_service, nlu_service, telegram_service
 from app.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -15,7 +19,7 @@ async def telegram_webhook(
     x_telegram_bot_api_secret_token: Optional[str] = Header(None)
 ) -> dict:
     """
-    Telegram webhook endpoint (skeleton).
+    Telegram webhook endpoint.
 
     Args:
         bot_token: Bot token from URL path
@@ -25,23 +29,78 @@ async def telegram_webhook(
     Returns:
         Acknowledgment response
 
-    Note:
-        Full implementation with NLU processing in Story 1.3
-        Full authentication validation in Story 1.2
     """
-    # Log incoming webhook
+    if not settings.telegram_webhook_secret:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Webhook secret is not configured",
+        )
+
+    if x_telegram_bot_api_secret_token != settings.telegram_webhook_secret:
+        logger.warning(
+            "Invalid Telegram secret token",
+            extra={"has_secret": x_telegram_bot_api_secret_token is not None},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid secret token",
+        )
+
+    if settings.telegram_bot_token and bot_token != settings.telegram_bot_token:
+        logger.warning("Invalid bot token in webhook path")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid bot token",
+        )
+
     body = await request.json()
     logger.info(
-        "Telegram webhook received (skeleton)",
+        "Telegram webhook received",
         extra={
-            "bot_token": bot_token[:10] + "...",  # Log partial for security
-            "has_secret": x_telegram_bot_api_secret_token is not None,
-            "update_id": body.get("update_id")
-        }
+            "bot_token": bot_token[:10] + "...",
+            "update_id": body.get("update_id"),
+        },
     )
 
-    # Skeleton: Just acknowledge receipt
-    # Story 1.2 will add proper authentication
-    # Story 1.3 will add NLU processing
+    message = body.get("message") or body.get("edited_message")
+    if not message:
+        return {"status": "ok", "message": "No message to process"}
 
-    return {"status": "ok", "message": "Webhook received (skeleton)"}
+    chat = message.get("chat", {})
+    sender = message.get("from", {})
+    chat_id = chat.get("id")
+    telegram_id = sender.get("id")
+
+    if chat_id is None or telegram_id is None:
+        return {"status": "ok", "message": "Missing chat or user info"}
+
+    text = message.get("text", "")
+
+    # Cold-start UX: send typing indicator immediately
+    await telegram_service.send_typing_indicator(chat_id)
+
+    # Minimal user tracking
+    await database_service.upsert_user(telegram_id, settings.timezone)
+
+    if text.startswith("/self_test"):
+        db_ok = await database_service.health_check()
+        gemini_ok, gemini_error = await nlu_service.health_check()
+
+        response_lines = [
+            "🔎 Diagnostic système",
+            f"DB: {'✅' if db_ok else '❌'}",
+            f"Gemini: {'✅' if gemini_ok else '❌'}",
+        ]
+        if not gemini_ok and gemini_error:
+            response_lines.append(f"Gemini error: {gemini_error}")
+
+        response_text = "\n".join(response_lines)
+        await telegram_service.send_message(chat_id, response_text)
+        return {"status": "ok", "message": "Self-test processed"}
+
+    nlu_result = await nlu_service.identify_intent(text)
+    response_text = nlu_result.get("response_text") or "Réponse indisponible."
+
+    await telegram_service.send_message(chat_id, response_text)
+
+    return {"status": "ok", "message": "Webhook processed"}

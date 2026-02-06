@@ -55,6 +55,27 @@ class DatabaseService:
             logger.error(f"Database health check failed: {str(exc)}")
             return False
 
+    async def upsert_user(self, telegram_id: int, timezone: str) -> bool:
+        """
+        Insert or update a user record.
+
+        Args:
+            telegram_id: Telegram user ID
+            timezone: User timezone
+
+        Returns:
+            True if successful
+        """
+        try:
+            client = self.get_client()
+            payload = {"telegram_id": telegram_id, "timezone": timezone}
+            client.table("users").upsert(payload).execute()
+            logger.info(f"User upserted: {telegram_id}")
+            return True
+        except Exception as exc:
+            logger.error(f"Failed to upsert user: {str(exc)}")
+            return False
+
 
 # Singleton instance
 database_service = DatabaseService()
